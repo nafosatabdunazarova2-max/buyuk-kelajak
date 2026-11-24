@@ -1,51 +1,219 @@
+
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mehmonlar daftari</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nafosat Abdunazarova — Atirgul Doska</title>
 <style>
-body { font-family: system-ui, sans-serif; max-width: 560px; margin: 32px auto; padding: 0 16px; background: #f4f7f6; color: #1f2d2d; }
-h1 { color: #2f6f6f; }
-form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-input { flex: 1; min-width: 140px; padding: 10px; border: 1px solid #bcd; border-radius: 8px; font-size: 16px; }
-button { padding: 10px 14px; border: 0; border-radius: 8px; background: #2f6f6f; color: #fff; font-size: 16px; }
-ul { padding: 0; }
-li { background: #fff; padding: 10px 12px; margin-bottom: 8px; border-radius: 8px; list-style: none; }
+* { box-sizing: border-box; font-family: Arial, sans-serif; }
+body {
+margin: 0;
+min-height: 100vh;
+background: linear-gradient(160deg, #2b0a18, #4b1227 55%, #1d0710);
+color: #fff;
+padding: 20px;
+}
+.wrap {
+max-width: 680px;
+margin: 0 auto;
+}
+.card {
+background: rgba(58, 12, 30, 0.85);
+border: 1px solid rgba(255, 182, 203, 0.25);
+border-radius: 18px;
+padding: 18px;
+margin-bottom: 16px;
+box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+}
+.top-bar {
+display: flex;
+flex-wrap: wrap;
+align-items: center;
+justify-content: space-between;
+gap: 10px;
+}
+.title {
+font-size: 22px;
+font-weight: bold;
+margin: 0;
+}
+.sub {
+opacity: 0.85;
+font-size: 14px;
+margin-top: 4px;
+}
+.btns {
+display: flex;
+gap: 8px;
+}
+button {
+border: none;
+border-radius: 10px;
+padding: 10px 14px;
+font-weight: bold;
+cursor: pointer;
+}
+.btn-pink {
+background: #ff5c8a;
+color: #fff;
+}
+.btn-dark {
+background: rgba(255,255,255,0.12);
+color: #fff;
+}
+input, textarea {
+width: 100%;
+border-radius: 10px;
+border: 1px solid rgba(255,255,255,0.2);
+background: rgba(20, 4, 10, 0.65);
+color: #fff;
+padding: 11px 12px;
+margin-bottom: 10px;
+font-size: 15px;
+}
+textarea { min-height: 85px; resize: vertical; }
+.note {
+background: rgba(42, 8, 22, 0.9);
+border: 1px solid rgba(255,255,255,0.12);
+border-radius: 14px;
+padding: 14px;
+margin-bottom: 10px;
+}
+.note-title { font-size: 17px; font-weight: bold; margin-bottom: 6px; }
+.note-meta { font-size: 12px; opacity: 0.75; }
+.hidden { display: none; }
+.status { font-size: 13px; color: #ffd1df; min-height: 18px; }
 </style>
 </head>
 <body>
-<h1>Mehmonlar daftari</h1>
-<form id="f">
-<input id="a" placeholder="Ismingiz" maxlength="60" required>
-<input id="t" placeholder="Xabaringiz..." maxlength="255" required>
-<button>Qo'shish</button>
-</form>
-<ul id="list"></ul>
+<div class="wrap">
+<div class="card">
+<div class="sub">Nafosat Abdunazarova ATT:</div>
+<div class="top-bar">
+<h1 class="title">🌹 Atirgul Doska</h1>
+<div class="btns">
+<button class="btn-pink" id="toggleFormBtn">+ Yangi Xabar</button>
+<button class="btn-dark" id="reloadBtn">Barcha xabarlar</button>
+</div>
+</div>
+</div>
+
+<div class="card" id="formBox">
+<input id="authorInput" type="text" placeholder="Ismingiz (masalan: Nafosat)" />
+<textarea id="titleInput" placeholder="Xabaringizni yozing..."></textarea>
+<button class="btn-pink" id="saveBtn">Saqlash</button>
+<div class="status" id="statusText"></div>
+</div>
+
+<div class="card">
+<input id="searchInput" type="text" placeholder="Xabarlar ichidan qidirish..." />
+<div id="notesList">Yuklanmoqda...</div>
+</div>
+</div>
+
 <script>
-const list = document.getElementById("list");
-async function load() {
-const r = await fetch("/api");
-const rows = await r.json();
-list.innerHTML = "";
-for (const n of rows) {
-const li = document.createElement("li");
-li.textContent = n.author + ": " + n.title;
-list.appendChild(li);
+const API_URL = "/.netlify/functions/api";
+let allNotes = [];
+
+const notesList = document.getElementById("notesList");
+const searchInput = document.getElementById("searchInput");
+const authorInput = document.getElementById("authorInput");
+const titleInput = document.getElementById("titleInput");
+const saveBtn = document.getElementById("saveBtn");
+const statusText = document.getElementById("statusText");
+const formBox = document.getElementById("formBox");
+const toggleFormBtn = document.getElementById("toggleFormBtn");
+const reloadBtn = document.getElementById("reloadBtn");
+
+function escapeHtml(text) {
+return String(text || "")
+.replace(/&/g, "&amp;")
+.replace(/</g, "&lt;")
+.replace(/>/g, "&gt;")
+.replace(/"/g, "&quot;");
+}
+
+function renderNotes(items) {
+if (!items.length) {
+notesList.innerHTML = "<p>Hozircha xabarlar yo‘q.</p>";
+return;
+}
+notesList.innerHTML = items.map(n => `
+<div class="not
+
+Abdunazarova Nafosat ATT:
+e">
+<div class="note-title">+ ${escapeHtml(n.title)}</div>
+<div class="note-meta">${escapeHtml(n.author  "Mehmon")} • ${escapeHtml(n.created_at  "")}</div>
+</div>
+).join("");
+}
+
+async function loadNotes() {
+try {
+const res = await fetch(API_URL);
+const data = await res.json();
+if (!res.ok) throw new Error(data.error || "Xatolik");
+allNotes = Array.isArray(data) ? data : [];
+const q = searchInput.value.trim().toLowerCase();
+const filtered = q
+? allNotes.filter(n =>
+String(n.title || "").toLowerCase().includes(q) ||
+String(n.author || "").toLowerCase().includes(q)
+)
+: allNotes;
+renderNotes(filtered);
+} catch (err) {
+notesList.innerHTML = <p>Xabarlarni yuklashda xatolik: ${escapeHtml(err.message)}</p>`;
 }
 }
-document.getElementById("f").onsubmit = async (e) => {
-e.preventDefault();
-const t = document.getElementById("t");
-await fetch("/api", {
+
+saveBtn.addEventListener("click", async () => {
+const author = authorInput.value.trim() || "Nafosat Abdunazarova";
+const title = titleInput.value.trim();
+if (!title) {
+statusText.textContent = "Avval xabar matnini yozing.";
+return;
+}
+saveBtn.disabled = true;
+statusText.textContent = "Saqlanmoqda...";
+try {
+const res = await fetch(API_URL, {
 method: "POST",
 headers: { "Content-Type": "application/json" },
-body: JSON.stringify({ author: document.getElementById("a").value, title: t.value })
+body: JSON.stringify({ author, title })
 });
-t.value = "";
-load();
-};
-load();
+const data = await res.json();
+if (!res.ok) throw new Error(data.error || "Saqlanmadi");
+titleInput.value = "";
+statusText.textContent = "Saqlandi!";
+await loadNotes();
+} catch (err) {
+statusText.textContent = "Xato: " + err.message;
+} finally {
+saveBtn.disabled = false;
+}
+});
+
+searchInput.addEventListener("input", () => {
+const q = searchInput.value.trim().toLowerCase();
+const filtered = q
+? allNotes.filter(n =>
+String(n.title  "").toLowerCase().includes(q) 
+String(n.author || "").toLowerCase().includes(q)
+)
+: allNotes;
+renderNotes(filtered);
+});
+
+toggleFormBtn.addEventListener("click", () => {
+formBox.classList.toggle("hidden");
+});
+
+reloadBtn.addEventListener("click", loadNotes);
+
+loadNotes();
 </script>
 </body>
 </html>
