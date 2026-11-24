@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mehmonlar daftari</title>
+<style>
+body { font-family: system-ui, sans-serif; max-width: 560px; margin: 32px auto; padding: 0 16px; background: #f4f7f6; color: #1f2d2d; }
+h1 { color: #2f6f6f; }
+form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+input { flex: 1; min-width: 140px; padding: 10px; border: 1px solid #bcd; border-radius: 8px; font-size: 16px; }
+button { padding: 10px 14px; border: 0; border-radius: 8px; background: #2f6f6f; color: #fff; font-size: 16px; }
+ul { padding: 0; }
+li { background: #fff; padding: 10px 12px; margin-bottom: 8px; border-radius: 8px; list-style: none; }
+</style>
+</head>
+<body>
+<h1>Mehmonlar daftari</h1>
+<form id="f">
+<input id="a" placeholder="Ismingiz" maxlength="60" required>
+<input id="t" placeholder="Xabaringiz..." maxlength="255" required>
+<button>Qo'shish</button>
+</form>
+<ul id="list"></ul>
+<script>
+const list = document.getElementById("list");
+async function load() {
+const r = await fetch("/api");
+const rows = await r.json();
+list.innerHTML = "";
+for (const n of rows) {
+const li = document.createElement("li");
+li.textContent = n.author + ": " + n.title;
+list.appendChild(li);
+}
+}
+document.getElementById("f").onsubmit = async (e) => {
+e.preventDefault();
+const t = document.getElementById("t");
+await fetch("/api", {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({ author: document.getElementById("a").value, title: t.value })
+});
+t.value = "";
+load();
+};
+load();
+</script>
+</body>
+</html>
